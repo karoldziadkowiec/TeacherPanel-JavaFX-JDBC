@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="520.0" prefWidth="600.0" style="-fx-background-color: #dbdfff;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.teacherpaneljavafxjdbc.ListOfGroupsController">
+   <children>
+      <TableView fx:id="tableView" layoutX="92.0" layoutY="100.0" prefHeight="297.0" prefWidth="415.0">
+        <columns>
+          <TableColumn fx:id="groupNameColumn" prefWidth="208.0" text="Group Name" />
+          <TableColumn fx:id="groupLimitColumn" prefWidth="206.40001220703124" text="Group Limit" />
+        </columns>
+      </TableView>
+      <Label layoutX="232.0" layoutY="25.0" text="List of groups" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="20.0" />
+         </font>
+      </Label>
+      <Button layoutX="351.0" layoutY="64.0" onAction="#findEmptyGroup" prefHeight="28.0" prefWidth="155.0" text="Find empty">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Button layoutX="351.0" layoutY="405.0" onAction="#removeGroup" prefHeight="28.0" prefWidth="155.0" text="Remove">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Button layoutX="351.0" layoutY="448.0" onAction="#backToHelloWindow" prefHeight="28.0" prefWidth="155.0" text="Back">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Button layoutX="92.0" layoutY="406.0" onAction="#calculateGroupFilling" prefHeight="30.0" prefWidth="181.0" text="Calculate group filling">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Label fx:id="groupFillingCounter" layoutX="125.0" layoutY="434.0" prefHeight="28.0" prefWidth="147.0" text="Filling: " textFill="#763cff">
+         <font>
+            <Font name="Comic Sans MS Bold" size="20.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

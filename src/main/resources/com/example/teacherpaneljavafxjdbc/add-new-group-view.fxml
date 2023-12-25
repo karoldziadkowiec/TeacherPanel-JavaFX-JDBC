@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="520.0" prefWidth="600.0" style="-fx-background-color: #dbdfff;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.teacherpaneljavafxjdbc.AddNewGroupController">
+   <children>
+      <Label layoutX="228.0" layoutY="33.0" text="Add new group" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="20.0" />
+         </font>
+      </Label>
+      <Button layoutX="360.0" layoutY="447.0" onAction="#backToHelloWindow" prefHeight="28.0" prefWidth="155.0" text="Back">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TableView fx:id="tableView" layoutX="100.0" layoutY="69.0" prefHeight="297.0" prefWidth="415.0">
+         <columns>
+            <TableColumn fx:id="groupNameColumn" prefWidth="208.0" text="Group Name" />
+            <TableColumn fx:id="groupLimitColumn" prefWidth="206.40001220703124" text="Group Limit" />
+         </columns>
+      </TableView>
+      <Button layoutX="360.0" layoutY="399.0" onAction="#addNewGroup" prefHeight="28.0" prefWidth="155.0" text="Add">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TextField fx:id="groupNameTextField" layoutX="99.0" layoutY="399.0" prefHeight="30.0" prefWidth="120.0" />
+      <Label layoutX="113.0" layoutY="375.0" text="Group Name" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS" size="16.0" />
+         </font>
+      </Label>
+      <Label layoutX="244.0" layoutY="375.0" text="Group Limit" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS" size="16.0" />
+         </font>
+      </Label>
+      <TextField fx:id="groupLimitTextField" layoutX="227.0" layoutY="399.0" prefHeight="30.0" prefWidth="120.0" />
+   </children>
+</AnchorPane>

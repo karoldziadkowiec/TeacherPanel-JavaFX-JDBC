@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="520.0" prefWidth="600.0" style="-fx-background-color: #dbdfff;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.teacherpaneljavafxjdbc.EditTeacherDataController">
+   <children>
+      <Label layoutX="213.0" layoutY="44.0" text="Edit teacher data" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="20.0" />
+         </font>
+      </Label>
+      <Button layoutX="458.0" layoutY="457.0" onAction="#backToHelloWindow" prefHeight="30.0" prefWidth="116.0" text="Back">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TableView fx:id="tableView" editable="true" layoutX="25.0" layoutY="89.0" prefHeight="298.0" prefWidth="550.0">
+         <columns>
+            <TableColumn fx:id="nameColumn" prefWidth="93.5999755859375" text="Name" />
+            <TableColumn fx:id="surnameColumn" prefWidth="99.199951171875" text="Surname" />
+            <TableColumn fx:id="conditionColumn" prefWidth="95.20001220703125" text="Condition" />
+            <TableColumn fx:id="birthdayColumn" prefWidth="58.40008544921875" text="Birthday" />
+            <TableColumn fx:id="salaryColumn" prefWidth="80.800048828125" text="Salary" />
+            <TableColumn fx:id="groupColumn" prefWidth="128.79998779296875" text="Group" />
+         </columns>
+      </TableView>
+      <Button layoutX="25.0" layoutY="456.0" onAction="#addToSalary" prefHeight="30.0" prefWidth="166.0" text="Add">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Button layoutX="220.0" layoutY="456.0" onAction="#changeCondition" prefHeight="30.0" prefWidth="166.0" text="Change">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TextField fx:id="salaryTextField" layoutX="25.0" layoutY="418.0" prefHeight="30.0" prefWidth="166.0" />
+      <Label layoutX="25.0" layoutY="396.0" prefHeight="15.0" prefWidth="166.0" text="Add to salary" textFill="#72259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="14.0" />
+         </font>
+      </Label>
+      <Label layoutX="220.0" layoutY="396.0" prefHeight="15.0" prefWidth="166.0" text="Change condition" textFill="#72259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="14.0" />
+         </font>
+      </Label>
+      <ComboBox fx:id="conditionComboBox" layoutX="220.0" layoutY="418.0" prefHeight="30.0" prefWidth="166.0" />
+      <Button layoutX="419.0" layoutY="418.0" onAction="#saveChanges" prefHeight="28.0" prefWidth="155.0" text="Save changes">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+   </children>
+</AnchorPane>

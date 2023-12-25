@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="520.0" prefWidth="600.0" style="-fx-background-color: #dbdfff;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.teacherpaneljavafxjdbc.SearchController">
+   <children>
+      <Label layoutX="266.0" layoutY="43.0" text="Search" textFill="#4b259c">
+         <font>
+            <Font name="Comic Sans MS Bold" size="20.0" />
+         </font>
+      </Label>
+      <Button layoutX="430.0" layoutY="431.0" onAction="#backToHelloWindow" prefHeight="28.0" prefWidth="155.0" text="Back">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TableView fx:id="tableView" layoutX="35.0" layoutY="121.0" prefHeight="298.0" prefWidth="550.0">
+         <columns>
+            <TableColumn fx:id="nameColumn" prefWidth="93.5999755859375" text="Name" />
+            <TableColumn fx:id="surnameColumn" prefWidth="99.199951171875" text="Surname" />
+            <TableColumn fx:id="conditionColumn" prefWidth="95.20001220703125" text="Condition" />
+            <TableColumn fx:id="birthdayColumn" prefWidth="58.40008544921875" text="Birthday" />
+            <TableColumn fx:id="salaryColumn" prefWidth="80.800048828125" text="Salary" />
+            <TableColumn fx:id="groupColumn" prefWidth="128.79998779296875" text="Group" />
+         </columns>
+      </TableView>
+      <Button layoutX="232.0" layoutY="84.0" onAction="#searchBySurname" prefHeight="28.0" prefWidth="155.0" text="Search by surname">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <Button layoutX="396.0" layoutY="84.0" onAction="#searchByPartial" prefHeight="28.0" prefWidth="155.0" text="Search by partial">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </Button>
+      <TextField fx:id="searchTextField" layoutX="35.0" layoutY="84.0" prefHeight="30.0" prefWidth="190.0" />
+   </children>
+</AnchorPane>
