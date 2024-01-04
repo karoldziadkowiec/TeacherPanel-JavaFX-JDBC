@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 import java.util.logging.SocketHandler;
 

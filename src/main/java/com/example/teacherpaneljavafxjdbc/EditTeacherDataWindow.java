@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 public class Teacher implements Comparable<Teacher>{
     String name;
@@ -14,7 +14,14 @@ public class Teacher implements Comparable<Teacher>{
        this.birthday = birthday;
        this.salary = salary;
     }
-
+    public Teacher(String name, String surname, TeacherCondition condition, Integer birthday, double salary, String teacherGroup) {
+        this.name = name;
+        this.surname = surname;
+        this.condition = condition;
+        this.birthday = birthday;
+        this.salary = salary;
+        this.teacherGroup = teacherGroup;
+    }
     public void printing() {
         System.out.print("Teacher: " + name + " " + surname);
         System.out.print(", Condition: " + condition);

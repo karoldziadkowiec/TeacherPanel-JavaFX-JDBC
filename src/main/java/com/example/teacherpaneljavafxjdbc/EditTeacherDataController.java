@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,6 +17,7 @@ import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
+import java.sql.*;
 
 public class EditTeacherDataController {
     @FXML
@@ -52,37 +53,84 @@ public class EditTeacherDataController {
 
     @FXML
     public void initialize() {
-        if (classContainer != null) {
-            nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
-            surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
-            conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
-            birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
-            salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
-            groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
+        surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
+        conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
+        birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
+        salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
+        groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
 
-            nameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-            surnameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-            conditionColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(TeacherCondition.values())));
-            birthdayColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-            salaryColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-            groupColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        nameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        surnameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        conditionColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(TeacherCondition.values())));
+        birthdayColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        salaryColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        groupColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
-            ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        loadDataFromDatabase();
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                for (Teacher teacher : classTeacher.getTeacherList()) {
-                    teacher.setTeacherGroup(classTeacher.getGroupName());
-                    teachers.add(teacher);
+        conditionComboBox.setItems(FXCollections.observableArrayList(TeacherCondition.values()));
+    }
+
+    private void loadDataFromDatabase() {
+        ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT name, surname, teacherCondition, birthday, salary, groupID FROM teachers";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        String groupName = getGroupName(groupID);
+
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
                 }
             }
-            tableView.setItems(teachers);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        tableView.setItems(teachers);
+    }
 
-            conditionComboBox.setItems(FXCollections.observableArrayList(TeacherCondition.values()));
-        } else {
-            System.err.println("Error: classContainer is null.");
+    private TeacherCondition parseTeacherCondition(String conditionValue) {
+        try {
+            return TeacherCondition.valueOf(conditionValue);
+        } catch (NumberFormatException e) {
+            return TeacherCondition.ABSENT;
         }
     }
 
+    private String getGroupName(int groupID) {
+        String groupName = "";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/teacherpanel", "root", "")) {
+            String query = "SELECT name FROM groups WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, groupID);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        groupName = resultSet.getString("name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return groupName;
+    }
     @FXML
     void backToHelloWindow(ActionEvent event) {
         try {
@@ -113,21 +161,31 @@ public class EditTeacherDataController {
             }
 
             double amount = Double.parseDouble(amountString);
-            ClassTeacher selectedGroup = null;
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                if (classTeacher.getTeacherList().contains(selectedTeacher)) {
-                    selectedGroup = classTeacher;
-                    break;
+            String url = "jdbc:mysql://localhost:3306/teacherpanel";
+            String username = "root";
+            String password = "";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String updateSalaryQuery = "UPDATE teachers SET salary = salary + ? WHERE name = ? AND surname = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateSalaryQuery)) {
+                    preparedStatement.setDouble(1, amount);
+                    preparedStatement.setString(2, selectedTeacher.getTeacherName());
+                    preparedStatement.setString(3, selectedTeacher.getTeacherSurname());
+                    int rowsAffected = preparedStatement.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        System.out.println("Salary updated successfully.");
+                    } else {
+                        System.err.println("Error: Teacher not found.");
+                        return;
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
 
-            if (selectedGroup != null) {
-                selectedGroup.addSalary(selectedTeacher, amount);
-                tableView.refresh();
-            } else {
-                System.err.println("Error: Selected teacher not found in any group.");
-            }
+            tableView.refresh();
 
         } catch (NumberFormatException e) {
             System.err.println("Error: Invalid salary change amount format.");
@@ -135,6 +193,7 @@ public class EditTeacherDataController {
             e.printStackTrace();
         }
     }
+
 
     @FXML
     void changeCondition(ActionEvent event) {
@@ -151,20 +210,30 @@ public class EditTeacherDataController {
                 return;
             }
 
-            ClassTeacher selectedGroup = null;
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                if (classTeacher.getTeacherList().contains(selectedTeacher)) {
-                    selectedGroup = classTeacher;
-                    break;
+            String url = "jdbc:mysql://localhost:3306/teacherpanel";
+            String username = "root";
+            String password = "";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String updateConditionQuery = "UPDATE teachers SET teacherCondition = ? WHERE name = ? AND surname = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateConditionQuery)) {
+                    preparedStatement.setString(1, newCondition.toString());
+                    preparedStatement.setString(2, selectedTeacher.getTeacherName());
+                    preparedStatement.setString(3, selectedTeacher.getTeacherSurname());
+                    int rowsAffected = preparedStatement.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        System.out.println("Condition updated successfully.");
+                    } else {
+                        System.err.println("Error: Teacher not found.");
+                        return;
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
 
-            if (selectedGroup != null) {
-                selectedGroup.changeCondition(selectedTeacher, newCondition);
-                tableView.refresh();
-            } else {
-                System.err.println("Error: Selected teacher not found in any group.");
-            }
+            tableView.refresh();
 
         } catch (Exception e) {
             e.printStackTrace();

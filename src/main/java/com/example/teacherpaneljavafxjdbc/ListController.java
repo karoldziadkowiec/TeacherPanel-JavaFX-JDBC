@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,6 +13,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -51,28 +52,76 @@ public class ListController {
 
     @FXML
     public void initialize() {
-        if (classContainer != null) {
-            nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
-            surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
-            conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
-            birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
-            salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
-            groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
+        surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
+        conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
+        birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
+        salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
+        groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
 
-            ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        loadDataFromDatabase();
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                for (Teacher teacher : classTeacher.getTeacherList()) {
-                    teacher.setTeacherGroup(classTeacher.getGroupName());
-                    teachers.add(teacher);
+        conditionComboBox.setItems(FXCollections.observableArrayList(TeacherCondition.values()));
+    }
+
+    private void loadDataFromDatabase() {
+        ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT name, surname, teacherCondition, birthday, salary, groupID FROM teachers";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        String groupName = getGroupName(groupID);
+
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
                 }
             }
-            tableView.setItems(teachers);
-
-            conditionComboBox.setItems(FXCollections.observableArrayList(TeacherCondition.values()));
-        } else {
-            System.err.println("Error: classContainer is null.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        tableView.setItems(teachers);
+    }
+
+    private TeacherCondition parseTeacherCondition(String conditionValue) {
+        try {
+            return TeacherCondition.valueOf(conditionValue);
+        } catch (NumberFormatException e) {
+            return TeacherCondition.ABSENT;
+        }
+    }
+
+    private String getGroupName(int groupID) {
+        String groupName = "";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/teacherpanel", "root", "")) {
+            String query = "SELECT name FROM groups WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, groupID);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        groupName = resultSet.getString("name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return groupName;
     }
 
     @FXML
@@ -94,67 +143,141 @@ public class ListController {
         Teacher selectedTeacher = tableView.getSelectionModel().getSelectedItem();
 
         if (selectedTeacher != null) {
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                if (classTeacher.getTeacherList().contains(selectedTeacher)) {
-                    classTeacher.removeTeacher(selectedTeacher);
-                    tableView.getItems().remove(selectedTeacher);
-                    return;
-                }
-            }
-            System.err.println("Error: Teacher's group not found.");
+            removeFromDatabase(selectedTeacher);
+            tableView.getItems().remove(selectedTeacher);
         } else {
             System.err.println("Error: No teacher selected.");
         }
     }
 
-    @FXML
-    void sortByName(ActionEvent event) {
-        ObservableList<Teacher> teachers = tableView.getItems();
+    private void removeFromDatabase(Teacher teacher) {
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
 
-        if (teachers != null) {
-            List<Teacher> allTeachers = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String deleteQuery = "DELETE FROM teachers WHERE name = ? AND surname = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+                preparedStatement.setString(1, teacher.getTeacherName());
+                preparedStatement.setString(2, teacher.getTeacherSurname());
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                allTeachers.addAll(classTeacher.sortByName());
+                preparedStatement.executeUpdate();
             }
-            teachers.setAll(allTeachers);
-        } else {
-            System.err.println("Error: Teacher's group not found.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     @FXML
-    void sortBySalary(ActionEvent event) {
-        ObservableList<Teacher> teachers = tableView.getItems();
+    void sortByName(ActionEvent event) {
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
 
-        if (teachers != null) {
-            List<Teacher> allTeachers = new ArrayList<>();
+        ObservableList<Teacher> teachers = FXCollections.observableArrayList();
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                allTeachers.addAll(classTeacher.sortBySalary());
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM teachers ORDER BY name";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        int id = resultSet.getInt("id");
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        String groupName = getGroupName(groupID);
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
+                }
             }
-            teachers.setAll(allTeachers);
-        } else {
-            System.err.println("Error: Teacher's group not found.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
+        tableView.setItems(teachers);
+    }
+
+
+    @FXML
+    void sortBySalary(ActionEvent event) {
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
+
+        ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM teachers ORDER BY salary DESC";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        int id = resultSet.getInt("id");
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        String groupName = getGroupName(groupID);
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        tableView.setItems(teachers);
     }
 
     @FXML
     void maxSalary(ActionEvent event) {
         ObservableList<Teacher> teachers = FXCollections.observableArrayList();
 
-        if (classContainer != null && !classContainer.teacherGroups.isEmpty()) {
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                Teacher teacherWithMaxSalary = classTeacher.max();
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
 
-                if (teacherWithMaxSalary != null) {
-                    teachers.add(teacherWithMaxSalary);
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT id, name, surname, teacherCondition, birthday, salary, groupID FROM ( " +
+                    "SELECT id, name, surname, teacherCondition, birthday, salary, groupID, " +
+                    "ROW_NUMBER() OVER (PARTITION BY groupID ORDER BY salary DESC) as row_num " +
+                    "FROM teachers " +
+                    ") AS ranked " +
+                    "WHERE row_num = 1";
+
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        int id = resultSet.getInt("id");
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        String groupName = getGroupName(groupID);
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
                 }
             }
-            tableView.setItems(teachers);
-        } else {
-            System.err.println("Error: No teacher groups found.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
+        tableView.setItems(teachers);
     }
 
     @FXML
@@ -164,9 +287,25 @@ public class ListController {
         if (selectedCondition != null) {
             int conditionCount = 0;
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                conditionCount += classTeacher.countByCondition(selectedCondition);
+            String url = "jdbc:mysql://localhost:3306/teacherpanel";
+            String username = "root";
+            String password = "";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String query = "SELECT COUNT(*) AS count FROM teachers WHERE teacherCondition = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, selectedCondition.toString());
+
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        if (resultSet.next()) {
+                            conditionCount = resultSet.getInt("count");
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
+
             conditionCounter.setText("Counter: " + conditionCount);
         } else {
             System.err.println("Error: No condition selected.");

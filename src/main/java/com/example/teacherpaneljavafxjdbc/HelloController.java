@@ -1,5 +1,4 @@
-package com.example.teacherpaneljavafx;
-
+package com.example.teacherpaneljavafxjdbc;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

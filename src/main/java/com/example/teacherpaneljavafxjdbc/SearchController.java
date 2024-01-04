@@ -1,4 +1,4 @@
-package com.example.teacherpaneljavafx;
+package com.example.teacherpaneljavafxjdbc;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,6 +12,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 
 public class SearchController {
@@ -47,26 +48,75 @@ public class SearchController {
 
     @FXML
     public void initialize() {
-        if (classContainer != null) {
-            nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
-            surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
-            conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
-            birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
-            salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
-            groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherName"));
+        surnameColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSurname"));
+        conditionColumn.setCellValueFactory(new PropertyValueFactory<>("teacherCondition"));
+        birthdayColumn.setCellValueFactory(new PropertyValueFactory<>("teacherBirthday"));
+        salaryColumn.setCellValueFactory(new PropertyValueFactory<>("teacherSalary"));
+        groupColumn.setCellValueFactory(new PropertyValueFactory<>("teacherGroup"));
 
-            ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        loadDataFromDatabase();
+    }
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                for (Teacher teacher : classTeacher.getTeacherList()) {
-                    teacher.setTeacherGroup(classTeacher.getGroupName());
-                    teachers.add(teacher);
+    private void loadDataFromDatabase() {
+        ObservableList<Teacher> teachers = FXCollections.observableArrayList();
+        String url = "jdbc:mysql://localhost:3306/teacherpanel";
+        String username = "root";
+        String password = "";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT name, surname, teacherCondition, birthday, salary, groupID FROM teachers";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String name = resultSet.getString("name");
+                        String surname = resultSet.getString("surname");
+                        String teacherConditionValue = resultSet.getString("teacherCondition");
+                        TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                        int birthday = resultSet.getInt("birthday");
+                        double salary = resultSet.getDouble("salary");
+                        int groupID = resultSet.getInt("groupID");
+
+                        // Pobierz nazwę grupy na podstawie groupID
+                        String groupName = getGroupName(groupID);
+
+                        Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                        teachers.add(teacher);
+                    }
                 }
             }
-            tableView.setItems(teachers);
-        } else {
-            System.err.println("Error: classContainer is null.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        tableView.setItems(teachers);
+    }
+
+    private TeacherCondition parseTeacherCondition(String conditionValue) {
+        try {
+            return TeacherCondition.valueOf(conditionValue);
+        } catch (NumberFormatException e) {
+            return TeacherCondition.ABSENT;
+        }
+    }
+
+    private String getGroupName(int groupID) {
+        String groupName = "";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/teacherpanel", "root", "")) {
+            String query = "SELECT name FROM groups WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, groupID);
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        groupName = resultSet.getString("name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return groupName;
     }
     @FXML
     void backToHelloWindow(ActionEvent event) {
@@ -89,18 +139,42 @@ public class SearchController {
         if (searchedSurname != null && !searchedSurname.isEmpty()) {
             ObservableList<Teacher> teachers = FXCollections.observableArrayList();
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                Teacher foundTeacher = classTeacher.search(searchedSurname);
+            String url = "jdbc:mysql://localhost:3306/teacherpanel";
+            String username = "root";
+            String password = "";
 
-                if (foundTeacher != null) {
-                    teachers.add(foundTeacher);
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String query = "SELECT * FROM teachers WHERE surname = ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, searchedSurname);
+
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            int id = resultSet.getInt("id");
+                            String name = resultSet.getString("name");
+                            String surname = resultSet.getString("surname");
+                            String teacherConditionValue = resultSet.getString("teacherCondition");
+                            TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                            int birthday = resultSet.getInt("birthday");
+                            double salary = resultSet.getDouble("salary");
+                            int groupID = resultSet.getInt("groupID");
+
+                            String groupName = getGroupName(groupID);
+                            Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                            teachers.add(teacher);
+                        }
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
+
             tableView.setItems(teachers);
         } else {
             System.err.println("Error: Please enter a surname to search.");
         }
     }
+
 
     @FXML
     void searchByPartial(ActionEvent event) {
@@ -109,16 +183,39 @@ public class SearchController {
         if (partialString != null && !partialString.isEmpty()) {
             ObservableList<Teacher> teachers = FXCollections.observableArrayList();
 
-            for (ClassTeacher classTeacher : classContainer.teacherGroups.values()) {
-                ArrayList<Teacher> foundTeachers = classTeacher.searchPartial(partialString);
+            String url = "jdbc:mysql://localhost:3306/teacherpanel";
+            String username = "root";
+            String password = "";
 
-                if (!foundTeachers.isEmpty()) {
-                    teachers.addAll(foundTeachers);
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String query = "SELECT * FROM teachers WHERE surname LIKE ?";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                    preparedStatement.setString(1, "%" + partialString + "%");
+
+                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                        while (resultSet.next()) {
+                            int id = resultSet.getInt("id");
+                            String name = resultSet.getString("name");
+                            String surname = resultSet.getString("surname");
+                            String teacherConditionValue = resultSet.getString("teacherCondition");
+                            TeacherCondition teacherCondition = parseTeacherCondition(teacherConditionValue);
+                            int birthday = resultSet.getInt("birthday");
+                            double salary = resultSet.getDouble("salary");
+                            int groupID = resultSet.getInt("groupID");
+
+                            String groupName = getGroupName(groupID);
+                            Teacher teacher = new Teacher(name, surname, teacherCondition, birthday, salary, groupName);
+                            teachers.add(teacher);
+                        }
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
+
             tableView.setItems(teachers);
         } else {
-            System.err.println("Error: Please enter a partial name to search.");
+            System.err.println("Error: Please enter a surname to search.");
         }
     }
 }
